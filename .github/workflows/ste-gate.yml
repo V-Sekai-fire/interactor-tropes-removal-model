@@ -38,12 +38,16 @@ jobs:
           python zst.py -d model.tar.zst model.tar
           tar -xf model.tar
 
-      - name: Install runtime deps (no torch; onnxruntime + tokenizer-only transformers)
-        run: pip install onnxruntime onnxruntime-extensions optimum transformers pyarrow "numpy<2"
+      # The package list used to be written out here and again in the prek job,
+      # and neither copy could drift toward pixi.toml without the other. The
+      # `gate` environment declares it once, with no-default-feature so none of
+      # the training stack comes with it.
+      - uses: prefix-dev/setup-pixi@v0
+        with: { environments: gate, cache: true }
 
       - name: Run gate against PR diff
         run: |
-          python gate.py --base-ref "origin/${{ github.base_ref }}" --threshold 0.5 --max-findings 0 | tee gate_report.txt
+          pixi run -e gate python gate.py --base-ref "origin/${{ github.base_ref }}" --threshold 0.5 --max-findings 0 | tee gate_report.txt
 
       - name: Write job summary
         if: always()
@@ -75,8 +79,15 @@ jobs:
           python zst.py -d model.tar.zst model.tar
           tar -xf model.tar
 
-      - name: Install runtime deps (no torch; onnxruntime + tokenizer-only transformers)
-        run: pip install onnxruntime onnxruntime-extensions optimum transformers pyarrow "numpy<2" prek
+      # prek invokes the ste-gate hook as `pixi run -e gate python gate.py`, so
+      # pixi has to be here and the environment has to be materialised. The old
+      # `pip install` did not reach the hook at all: prek gives a system hook a
+      # sanitized PATH, so `python` resolved to an interpreter without numpy,
+      # which is the ModuleNotFoundError this workflow reported while appearing
+      # to have installed it.
+      - uses: prefix-dev/setup-pixi@v0
+        with: { environments: gate, cache: true }
+      - run: pip install prek
 
       - name: Run pre-commit hooks (prek)
         run: prek run --all-files --show-diff-on-failure --color always
