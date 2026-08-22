@@ -48,6 +48,29 @@ torch = { version = ">=2.6.0, <3", index = "https://download.pytorch.org/whl/cu1
 [target.osx-arm64.pypi-dependencies]
 torch = ">=2.6.0, <3"
 
+# The gate is the only thing CI runs on every pull request, and it needs none of
+# the training stack. `ste-gate.yml` said so in a step name -- "no torch;
+# onnxruntime + tokenizer-only transformers" -- and then hand-listed the packages
+# in two `pip install` lines that could drift from this file. This feature makes
+# that list a declared environment instead.
+#
+# What gate.py imports transitively: numpy and pyarrow directly, onnxruntime and
+# onnxruntime-extensions through runtime/infer.py, onnx through
+# runtime/regex_onnx.py.
+[feature.gate.dependencies]
+python = "3.11.*"
+pyarrow = "*"
+
+[feature.gate.pypi-dependencies]
+numpy = "<2"
+onnx = "*"
+onnxruntime = "*"
+onnxruntime-extensions = "*"
+
+[environments]
+default = { solve-group = "default" }
+gate = { features = ["gate"], no-default-feature = true }
+
 [tasks]
 gpu-check = "python -c \"import torch;print('torch',torch.__version__);print('cuda',torch.cuda.is_available())\""
 seed-tropes = "python scripts/seed_tropes.py"

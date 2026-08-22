@@ -3,7 +3,20 @@ repos:
     hooks:
       - id: ste-gate
         name: STE gate (ASD-STE100 Simplified Technical English enforcer)
-        entry: python gate.py
+        # `python gate.py` under `language: system` ran against whatever `python`
+        # the hook runner's PATH resolved to, which is not the interpreter that
+        # `pip install` populated. CI reported `ModuleNotFoundError: No module
+        # named 'numpy'` from gate.py line 30 while the workflow had just
+        # installed numpy; locally the same entry reported `No such file or
+        # directory`, because a Mac has no bare `python`. One cause, two
+        # symptoms: the entry named an interpreter rather than pinning one.
+        #
+        # `pixi run -e gate` pins it to the environment pixi.toml declares.
+        # That environment sets `no-default-feature`, so it carries what the
+        # gate imports and none of the training stack. The `gate` TASK is not
+        # used here: tasks belong to the default feature and do not resolve in
+        # an environment that excludes it.
+        entry: pixi run -e gate python gate.py
         language: system
         types_or: [markdown, text]
         pass_filenames: true
