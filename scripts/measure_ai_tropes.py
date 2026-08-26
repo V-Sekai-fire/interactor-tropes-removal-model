@@ -126,7 +126,11 @@ def compare(root):
 
 def main():
     ap = argparse.ArgumentParser(description="measure ai_trope.parquet over a corpus")
-    ap.add_argument("root", nargs="?", default="../.request_for_discussion")
+    # The RFDs moved twice: `.request_for_discussion` at the workspace root became
+    # `2-contract/request_for_discussion`, then `2-contract/weftspun-manuals`. This is a
+    # relative path and so it encodes a layout the manifest is free to change again;
+    # pass `root` explicitly if it has.
+    ap.add_argument("root", nargs="?", default="../../2-contract/weftspun-manuals")
     ap.add_argument("--inspect", action="store_true", help="print every hit in context")
     ap.add_argument("--audit", action="store_true", help="check each detector can fire")
     ap.add_argument("--compare", action="store_true",
