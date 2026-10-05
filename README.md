@@ -1,14 +1,21 @@
-# ste-enforcer
+# interactor-tropes-removal-model
 
-A pre-commit / CI gate that flags violations of **ASD-STE100 Simplified Technical English** — the international specification for clear, unambiguous technical documentation — in your prose files, with an exact location, the violated rule name, and a suggested STE-compliant rewrite for every finding.
+A pre-commit and CI gate that finds Simplified Technical English violations in prose and suggests a rewrite for each one.
 
-**Not a certified STE checker.** Full ASD-STE100 compliance requires human judgment (choosing the correct technical noun, assessing whether a sentence "makes good sense"). This tool covers the _mechanical_ subset — passive voice, long sentences, nominalizations, marketing adjectives, phrasal verbs, banned synonyms, missing articles, stacked auxiliaries, semicolons, contractions, and paragraph limits — which is where most readability problems live. See the [free ASD-STE100 specification](https://asd-ste100.org) for the complete standard. Trademarks belong to ASD.
+## Use
 
-## Use it
+The gate reads one ONNX model that scores each sentence for rule violations and a second model that writes the rewrite. It reports the file, the line, the rule and the suggestion. It checks the mechanical part of the rules only. It is not a certified checker, because some rules need a human to decide.
 
+## Build and run
+
+The pixi tasks in `pixi.toml` train the models and export them to ONNX. A release of this repository also carries the exported models. With the models in place, run the gate on files:
+
+```sh
+pixi run gate README.md
 ```
-pip install pre-commit  # or prek, a compatible Rust reimplementation
-pre-commit install
-```
 
-`gate.py` reads the ONNX models from `onnx_violations/` and `onnx_rewriter/` (built locally and cached/restored from a GitHub Release by `ste-gate.yml`.
+`pre-commit install` adds the gate as a hook.
+
+## Licence
+
+MIT. See `LICENSE`.
