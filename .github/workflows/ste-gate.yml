@@ -37,7 +37,13 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          gh release download --pattern "model.tar.zst" -D . || { echo "no release model found -- train locally and publish a release first"; exit 1; }
+          # `gh release download` with no tag looks for the "latest" release,
+          # and GitHub never marks a pre-release as latest. The only release
+          # here is a pre-release, so the bare command reported "release not
+          # found". Name the newest release, pre-release or not, explicitly.
+          tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          [ -n "$tag" ] || { echo "no release found -- train locally and publish a release first"; exit 1; }
+          gh release download "$tag" --pattern "model.tar.zst" -D . || { echo "release $tag has no model.tar.zst -- train locally and publish a release first"; exit 1; }
           pip install zstandard
           python zst.py -d model.tar.zst model.tar
           tar -xf model.tar
@@ -78,7 +84,13 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          gh release download --pattern "model.tar.zst" -D . || { echo "no release model found -- train locally and publish a release first"; exit 1; }
+          # `gh release download` with no tag looks for the "latest" release,
+          # and GitHub never marks a pre-release as latest. The only release
+          # here is a pre-release, so the bare command reported "release not
+          # found". Name the newest release, pre-release or not, explicitly.
+          tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          [ -n "$tag" ] || { echo "no release found -- train locally and publish a release first"; exit 1; }
+          gh release download "$tag" --pattern "model.tar.zst" -D . || { echo "release $tag has no model.tar.zst -- train locally and publish a release first"; exit 1; }
           pip install zstandard
           python zst.py -d model.tar.zst model.tar
           tar -xf model.tar
